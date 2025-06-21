@@ -33,7 +33,6 @@ model = dict(
                   path_lra = path_lra,),
         nms_thr=0.1,
         path_lra=path_lra,
-        num_convs=4,
         kac_included=False),
 )
 
@@ -140,7 +139,7 @@ optimizer_config = dict(grad_clip=None)
 lr_config = dict(policy='poly', power=0.9, min_lr=1e-7, by_epoch=True,
                  warmup='linear',warmup_iters=500,warmup_ratio=0.001,
                  )
-total_epochs = 100
+total_epochs = 300
 
 checkpoint_config = dict(interval=1)
 # yapf:disable

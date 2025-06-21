@@ -106,8 +106,8 @@ test_pipeline = [
 ]
 
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
+    samples_per_gpu=8,
+    workers_per_gpu=16,
     val_dataloader=dict(samples_per_gpu=1),
     test_dataloader=dict(samples_per_gpu=1),
     train=dict(
@@ -139,7 +139,7 @@ optimizer_config = dict(grad_clip=None)
 lr_config = dict(policy='poly', power=0.9, min_lr=1e-7, by_epoch=True,
                  warmup='linear',warmup_iters=500,warmup_ratio=0.001,
                  )
-total_epochs = 100
+total_epochs = 200
 
 checkpoint_config = dict(interval=1)
 # yapf:disable

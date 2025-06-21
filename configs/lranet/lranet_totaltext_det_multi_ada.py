@@ -25,18 +25,18 @@ model = dict(
         relu_before_extra_convs=True,
         act_cfg=None),
     bbox_head=dict(
-        type='LRAHeadKACSingle',
+        type='LRAHeadKAC',
         in_channels=256,
         num_coefficients=num_coefficients,
-        scales=(8,),
-        loss=dict(type='LRAKACLoss', num_coefficients=num_coefficients,
+        scales=(8, 16, 32),
+        loss=dict(type='LRALoss', num_coefficients=num_coefficients,
                   path_lra = path_lra,),
         nms_thr=0.1,
         path_lra=path_lra,
-        num_convs=2,
-        n_kernels=3,
+        num_convs=4,
+        n_kernels=4,
         kac_included=True,
-        is_efficient=True),
+        multi_kac=True,),
 )
 
 train_cfg = None
@@ -81,17 +81,17 @@ train_pipeline = [
     dict(type='Pad', size_divisor=32),
     dict(
         type='LRATargets',
-        level_proportion_range=((0, 1.0), (0.0, 0.0), (0.0, 0.0)),
-            with_area=True,
+        level_proportion_range=((0, 1.0), (0, 1.0), (0, 1.0)),
+        with_area=True,
         path_lra=path_lra,
         num_coefficients=num_coefficients,
-        num_samples=1,
+        num_samples=3,
     ),
     dict(
         type='CustomFormatBundle',
         keys=['polygons_area', 'gt_texts','lra_polys'],
         visualize=dict(flag=False, boundary_key=None)),
-    dict(type='Collect', keys=['img', 'p3_maps', 'polygons_area',  'gt_texts', 'lra_polys'])
+    dict(type='Collect', keys=['img', 'p3_maps', 'p4_maps', 'p5_maps', 'polygons_area',  'gt_texts', 'lra_polys'])
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
@@ -133,7 +133,7 @@ data = dict(
         ann_file='data/totaltext/totaltext_test.json',
         img_prefix='data/totaltext/imgs',
         pipeline=test_pipeline,))
-evaluation = dict(interval=1, metric=['hmean-e2e', 'precision-e2e', 'recall-e2e'])
+evaluation = dict(interval=1, metric='hmean-e2e')
 
 # optimizer
 optimizer = dict(type='SGD', lr=1e-3, momentum=0.90, weight_decay=5e-4)
