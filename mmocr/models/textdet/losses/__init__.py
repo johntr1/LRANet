@@ -5,7 +5,9 @@ from .pan_loss import PANLoss
 from .pse_loss import PSELoss
 from .textsnake_loss import TextSnakeLoss
 from .lra_loss import LRALoss
+from .lrakac_loss import LRAKACLoss
+
 
 __all__ = [
-    'PANLoss', 'PSELoss', 'DBLoss', 'TextSnakeLoss', 'FCELoss', 'DRRGLoss', 'LRALoss'
+    'PANLoss', 'PSELoss', 'DBLoss', 'TextSnakeLoss', 'FCELoss', 'DRRGLoss', 'LRALoss', 'LRAKACLoss'
 ]

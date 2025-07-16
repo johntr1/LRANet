@@ -6,8 +6,9 @@ from .pan_head import PANHead
 from .pse_head import PSEHead
 from .textsnake_head import TextSnakeHead
 from .lra_head import LRAHead
-
+from .lra_head_kac import LRAHeadKAC
+from .lra_head_single import LRAHeadKACSingle
 __all__ = [
     'PSEHead', 'PANHead', 'DBHead', 'FCEHead', 'HeadMixin', 'TextSnakeHead',
-    'DRRGHead', 'LRAHead'
+    'DRRGHead', 'LRAHead', 'LRAHeadKAC', 'LRAHeadKACSingle'
 ]

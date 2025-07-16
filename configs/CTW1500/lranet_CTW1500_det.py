@@ -1,6 +1,6 @@
 find_unused_parameters=True
 num_coefficients = 14
-path_lra = './eigenanchors/lra_totaltext_14.npz'
+path_lra = './eigenanchors/ctw1500_eigenanchors.npz'
 
 model = dict(
     type='LRANet',
@@ -30,7 +30,7 @@ model = dict(
         num_coefficients=num_coefficients,
         scales=(8, 16, 32),
         loss=dict(type='LRALoss', num_coefficients=num_coefficients,
-                path_lra = path_lra,),
+                  path_lra = path_lra,),
         nms_thr=0.1,
         path_lra=path_lra,
         num_convs=4),
@@ -47,7 +47,7 @@ img_norm_cfg = dict(
 
 train_pipeline = [
     dict(type='LoadImageFromFile',
-        ),
+         ),
     dict(
         type='LoadTextAnnotations',
         with_bbox=True,
@@ -116,19 +116,19 @@ data = dict(
         dataset=dict(
             type=dataset_type,
             ann_file=[
-                'data/totaltext/totaltext_train.json'],
+                'data/ctw1500/instances_training.json'],
             img_prefix=[
-                'data/totaltext/imgs/training'],
+                'data/ctw1500/imgs'],
             pipeline=train_pipeline)),
     val=dict(
         type=dataset_type,
-        ann_file='data/totaltext/totaltext_test.json',
-        img_prefix='data/totaltext/imgs',
+        ann_file='data/ctw1500/instances_test.json',
+        img_prefix='data/ctw1500/imgs',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file='data/totaltext/totaltext_test.json',
-        img_prefix='data/totaltext/imgs',
+        ann_file='data/ctw1500/instances_test.json',
+        img_prefix='data/ctw1500/imgs',
         pipeline=test_pipeline,))
 evaluation = dict(interval=1, metric='hmean-e2e')
 
@@ -137,8 +137,8 @@ optimizer = dict(type='SGD', lr=1e-3, momentum=0.90, weight_decay=5e-4)
 
 optimizer_config = dict(grad_clip=None)
 lr_config = dict(policy='poly', power=0.9, min_lr=1e-7, by_epoch=True,
-                warmup='linear',warmup_iters=500,warmup_ratio=0.001,
-                )
+                 warmup='linear',warmup_iters=500,warmup_ratio=0.001,
+                 )
 total_epochs = 200
 
 checkpoint_config = dict(interval=1)

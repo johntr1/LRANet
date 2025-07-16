@@ -183,10 +183,10 @@ class MinCostMatcher(nn.Module):
 
 
 @LOSSES.register_module()
-class LRALoss(nn.Module):
+class LRAKACLoss(nn.Module):
 
     def __init__(self, num_coefficients, path_lra, ohem_ratio=3.,
-                 with_weight=True,with_area_weight=True, steps = [8,16,32]
+                 with_weight=True,with_area_weight=True, steps = [4]
                  ):
         super().__init__()
 
@@ -212,7 +212,7 @@ class LRALoss(nn.Module):
         self.BCE_loss = torch.nn.BCELoss(reduce=False, size_average=False)
 
 
-    def forward(self, preds, _, p3_maps, p4_maps, p5_maps,polygons_area=None, lra_polys = None,**kwargs):
+    def forward(self, preds, _, p3_maps,polygons_area=None, lra_polys = None,**kwargs):
 
         assert isinstance(preds, list)
 
@@ -220,7 +220,7 @@ class LRALoss(nn.Module):
         reg_points_sparse = []
         device = preds[0][0].device
 
-        gts = [p3_maps, p4_maps, p5_maps]
+        gts = [p3_maps]
         if self.with_area_weight:
             assert polygons_area is not None
             max_num_polygon = max([len(p) for p in polygons_area])
@@ -231,28 +231,17 @@ class LRALoss(nn.Module):
                 pad_polygon_areas[bi, :len(po)] = torch.from_numpy(polygons_area[bi]).to(device)
         else:
             pad_polygon_areas = None
-        gt_polygons_areas = [pad_polygon_areas] * 3
+        gt_polygons_areas = [pad_polygon_areas]
         down_sample_rates = self.steps
 
         for idx, maps in enumerate(gts):
             gts[idx] = maps.float()
 
-        losses = multi_apply(self.forward_single, preds, gts, down_sample_rates, gt_polygons_areas)
+        loss_ce_dense, loss_point_dense, tr_mask = self.forward_single(preds[0], gts[0], down_sample_rates[0], gt_polygons_areas[0])
 
-        loss_ce_dense = torch.tensor(0., device=device,requires_grad=True).float()
-        loss_point_dense = torch.tensor(0.0, device=device,requires_grad=True).float()
+        tr_train_masks = [tr_mask]
+        tr_train_masks = torch.cat(tr_train_masks, dim=1)
 
-        tr_train_masks = []
-
-        for idx, data in enumerate(losses):
-            if idx == 0:
-                loss_ce_dense = loss_ce_dense + sum(data)
-            elif idx == 1:
-                loss_point_dense = loss_point_dense + sum(data)    
-            elif idx == 2:
-                tr_train_masks.append(data)
-
-        tr_train_masks = torch.cat(tr_train_masks[0], dim=1)
 
 
         for i in range(len(preds)):
@@ -304,16 +293,17 @@ class LRALoss(nn.Module):
         weight_dict = self.criterion.weight_dict
         for k in loss_dict.keys():
             if k in weight_dict:
-                loss_dict[k] *= weight_dict[k]
+                loss_dict[k] = loss_dict[k] * weight_dict[k]
 
         return loss_dict
     
     def forward_single(self, pred, gt, downsample_rate=None,areas=None):
+        
         cls_dense = pred[0].permute(0, 2, 3, 1).contiguous()
         reg_dense = pred[1].permute(0, 2, 3, 1).contiguous()
         gt = gt.permute(0, 2, 3, 1).contiguous()
 
-        tr_pred = cls_dense[:, :, :, :1].view(-1).sigmoid()
+        tr_pred = cls_dense[:, :, :, :1].view(-1).sigmoid().clamp(min=1e-6, max=1-1e-6)
         lra_pred = reg_dense[:, :, :, :].view(-1, self.num_coefficients)
         device = lra_pred.device 
 

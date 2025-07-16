@@ -1,6 +1,6 @@
 find_unused_parameters=True
 num_coefficients = 14
-path_lra = './eigenanchors/lra_totaltext_14.npz'
+path_lra = './eigenanchors/ctw1500_eigenanchors.npz'
 
 model = dict(
     type='LRANet',
@@ -25,15 +25,17 @@ model = dict(
         relu_before_extra_convs=True,
         act_cfg=None),
     bbox_head=dict(
-        type='LRAHead',
+        type='LRAHeadKACSingle',
         in_channels=256,
         num_coefficients=num_coefficients,
-        scales=(8, 16, 32),
-        loss=dict(type='LRALoss', num_coefficients=num_coefficients,
-                path_lra = path_lra,),
+        scales=(8,),
+        loss=dict(type='LRAKACLoss', num_coefficients=num_coefficients,
+                  path_lra = path_lra,),
         nms_thr=0.1,
         path_lra=path_lra,
-        num_convs=4),
+        num_convs=4,
+        kac_included=False,
+        is_efficient=False),
 )
 
 train_cfg = None
@@ -47,7 +49,7 @@ img_norm_cfg = dict(
 
 train_pipeline = [
     dict(type='LoadImageFromFile',
-        ),
+         ),
     dict(
         type='LoadTextAnnotations',
         with_bbox=True,
@@ -78,17 +80,17 @@ train_pipeline = [
     dict(type='Pad', size_divisor=32),
     dict(
         type='LRATargets',
-        level_proportion_range=((0, 0.25), (0.2, 0.65), (0.55, 1.0)),
-        with_area=True,
+        level_proportion_range=((0, 1.0), (0.0, 0.0), (0.0, 0.0)),
+            with_area=True,
         path_lra=path_lra,
         num_coefficients=num_coefficients,
-        num_samples=3,
+        num_samples=1,
     ),
     dict(
         type='CustomFormatBundle',
         keys=['polygons_area', 'gt_texts','lra_polys'],
         visualize=dict(flag=False, boundary_key=None)),
-    dict(type='Collect', keys=['img', 'p3_maps', 'p4_maps', 'p5_maps', 'polygons_area',  'gt_texts', 'lra_polys'])
+    dict(type='Collect', keys=['img', 'p3_maps', 'polygons_area',  'gt_texts', 'lra_polys'])
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
@@ -116,19 +118,19 @@ data = dict(
         dataset=dict(
             type=dataset_type,
             ann_file=[
-                'data/totaltext/totaltext_train.json'],
+                'data/ctw1500/instances_training.json'],
             img_prefix=[
-                'data/totaltext/imgs/training'],
+                'data/ctw1500/imgs'],
             pipeline=train_pipeline)),
     val=dict(
         type=dataset_type,
-        ann_file='data/totaltext/totaltext_test.json',
-        img_prefix='data/totaltext/imgs',
+        ann_file='data/ctw1500/instances_test.json',
+        img_prefix='data/ctw1500/imgs',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file='data/totaltext/totaltext_test.json',
-        img_prefix='data/totaltext/imgs',
+        ann_file='data/ctw1500/instances_test.json',
+        img_prefix='data/ctw1500/imgs',
         pipeline=test_pipeline,))
 evaluation = dict(interval=1, metric='hmean-e2e')
 
@@ -137,8 +139,8 @@ optimizer = dict(type='SGD', lr=1e-3, momentum=0.90, weight_decay=5e-4)
 
 optimizer_config = dict(grad_clip=None)
 lr_config = dict(policy='poly', power=0.9, min_lr=1e-7, by_epoch=True,
-                warmup='linear',warmup_iters=500,warmup_ratio=0.001,
-                )
+                 warmup='linear',warmup_iters=500,warmup_ratio=0.001,
+                 )
 total_epochs = 200
 
 checkpoint_config = dict(interval=1)
